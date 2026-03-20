@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>TradeShield — The UK's First Insured Trades Marketplace</title>
+  <meta name="description" content="Post jobs, hire verified insured tradespeople, pay through escrow. Reviews only unlock when the job is done. The UK trades industry, finally fixed."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#05090f;--surface:#0b1220;--surface2:#111d30;--surface3:#172236;
+      --gold:#f0a500;--gold2:#ffc140;--gold-a15:rgba(240,165,0,.15);--gold-a25:rgba(240,165,0,.25);
+      --jade:#00c285;--jade-a12:rgba(0,194,133,.12);
+      --ruby:#f03a3a;
+      --ink:#d8e4f0;--mist:#6b849e;--r:12px;--r2:20px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+
+    /* GRAIN */
+    body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='.028'/%3E%3C/svg%3E");
+      opacity:1}
+
+    /* ─── NAV ─── */
+    nav{position:fixed;inset-x:0;top:0;z-index:900;height:64px;
+      display:flex;align-items:center;justify-content:space-between;padding:0 48px;
+      background:rgba(5,9,15,.9);backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--gold-a25)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .shield{width:32px;height:36px;background:var(--gold);
+      clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:15px;color:var(--bg);line-height:1}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--ink)}
+    .wordmark b{color:var(--gold);font-weight:800}
+    .nav-links{display:flex;gap:32px}
+    .nav-links a{font-size:13.5px;font-weight:500;color:var(--mist);text-decoration:none;transition:color .15s}
+    .nav-links a:hover{color:var(--ink)}
+    .nav-right{display:flex;gap:10px;align-items:center}
+    .btn-ghost{padding:8px 18px;border-radius:8px;border:1px solid var(--gold-a25);
+      background:transparent;color:var(--ink);font-family:'Epilogue',sans-serif;
+      font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;
+      display:inline-flex;align-items:center;transition:all .15s}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-solid{padding:8px 20px;border-radius:8px;background:var(--gold);border:none;
+      color:var(--bg);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:700;
+      cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;
+      transition:all .18s}
+    .btn-solid:hover{background:var(--gold2);box-shadow:0 4px 20px rgba(240,165,0,.35)}
+
+    /* ─── HERO ─── */
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:100px 24px 80px;text-align:center;
+      position:relative;overflow:hidden}
+    .hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);
+      width:900px;height:600px;pointer-events:none;z-index:0;
+      background:radial-gradient(ellipse at 50% 0%,rgba(240,165,0,.1) 0%,transparent 65%)}
+    .hero-grid{position:absolute;inset:0;z-index:0;pointer-events:none;
+      background-image:linear-gradient(rgba(240,165,0,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(240,165,0,.03) 1px,transparent 1px);
+      background-size:64px 64px;animation:gridMove 80s linear infinite}
+    @keyframes gridMove{to{background-position:64px 64px}}
+    .hero-inner{position:relative;z-index:2;max-width:800px}
+
+    .launch-tag{display:inline-flex;align-items:center;gap:8px;
+      background:var(--gold-a15);border:1px solid var(--gold-a25);border-radius:100px;
+      padding:6px 16px;margin-bottom:28px;
+      font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;
+      text-transform:uppercase;color:var(--gold);
+      animation:fadeUp .6s ease both}
+    .launch-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);
+      animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+    h1{font-family:'Syne',sans-serif;font-weight:800;
+      font-size:clamp(52px,8vw,96px);line-height:.96;letter-spacing:-2.5px;
+      margin-bottom:24px;animation:fadeUp .6s .08s ease both}
+    h1 .g{color:var(--gold)}
+    h1 .u{border-bottom:5px solid var(--gold);padding-bottom:3px}
+
+    .hero-sub{font-size:clamp(16px,2vw,19px);line-height:1.75;color:var(--mist);
+      max-width:580px;margin:0 auto 40px;animation:fadeUp .6s .16s ease both}
+
+    .hero-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;
+      margin-bottom:44px;animation:fadeUp .6s .22s ease both}
+    .chip{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+      border-radius:9px;border:1px solid var(--gold-a25);background:var(--gold-a15);
+      font-size:13px;font-weight:600}
+
+    .hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+      margin-bottom:60px;animation:fadeUp .6s .28s ease both}
+    .btn-xl{padding:15px 36px;border-radius:10px;font-size:16px;font-weight:700}
+
+    /* Live stats */
+    .hero-stats{display:flex;gap:48px;flex-wrap:wrap;justify-content:center;
+      animation:fadeUp .6s .34s ease both}
+    .hs{text-align:center}
+    .hs-val{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;
+      letter-spacing:-1px;color:var(--gold);min-width:60px;display:block}
+    .hs-val.loading{opacity:.3;animation:pulse .8s infinite alternate}
+    .hs-label{font-size:12px;color:var(--mist);margin-top:4px}
+
+    /* ─── STRIP ─── */
+    .strip{background:var(--surface);border-top:1px solid var(--gold-a25);
+      border-bottom:1px solid var(--gold-a25)}
+    .strip-grid{display:grid;grid-template-columns:repeat(4,1fr);
+      max-width:1160px;margin:0 auto}
+    .strip-item{padding:44px 32px;border-right:1px solid var(--gold-a25);
+      transition:background .2s;cursor:default}
+    .strip-item:last-child{border-right:none}
+    .strip-item:hover{background:var(--gold-a15)}
+    .si-n{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;
+      color:rgba(240,165,0,.5);display:block;margin-bottom:16px}
+    .si-icon{font-size:32px;display:block;margin-bottom:12px}
+    .si-title{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:8px}
+    .si-desc{font-size:13px;color:var(--mist);line-height:1.6}
+
+    /* ─── SECTION ─── */
+    section{padding:96px 0}
+    .w{max-width:1160px;margin:0 auto;padding:0 48px}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:2.5px;
+      text-transform:uppercase;color:var(--gold);display:block;margin-bottom:12px}
+    h2{font-family:'Syne',sans-serif;font-weight:800;
+      font-size:clamp(36px,4.5vw,58px);letter-spacing:-1.5px;line-height:1.02;
+      margin-bottom:16px}
+    h2 em{font-style:normal;color:var(--gold)}
+    .desc{font-size:17px;line-height:1.75;color:var(--mist);max-width:500px;margin-bottom:56px}
+
+    /* ─── HOW IT WORKS ─── */
+    .hiw-tabs{display:flex;gap:6px;margin-bottom:44px}
+    .htab{padding:9px 22px;border-radius:8px;border:1px solid var(--gold-a25);
+      background:transparent;color:var(--mist);font-family:'Epilogue',sans-serif;
+      font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+    .htab.on{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+    .hiw-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+    .steps{display:flex;flex-direction:column}
+    .step{display:flex;gap:18px;padding:20px 0;
+      border-bottom:1px solid rgba(255,255,255,.05);opacity:.38;transition:opacity .2s}
+    .step:hover{opacity:1}
+    .sn{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;
+      color:var(--gold);line-height:1;min-width:50px;letter-spacing:-2px}
+    .st{font-size:15px;font-weight:600;margin-bottom:5px}
+    .sd{font-size:13px;color:var(--mist);line-height:1.6}
+
+    /* Flow card */
+    .flow-card{background:var(--surface);border:1px solid var(--gold-a25);
+      border-radius:var(--r2);padding:28px}
+    .flow-row{display:flex;align-items:center;gap:14px;padding:13px 0;
+      border-bottom:1px solid rgba(255,255,255,.05)}
+    .flow-row:last-child{border-bottom:none}
+    .fn{width:30px;height:30px;border-radius:50%;background:var(--gold-a15);
+      border:1px solid var(--gold-a25);display:flex;align-items:center;
+      justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .ft{font-size:14px;font-weight:500}
+    .fs{margin-left:auto;font-size:11.5px;font-weight:700}
+    .fs.locked{color:var(--gold)}
+    .fs.done{color:var(--jade)}
+    .fs.pending{color:var(--mist)}
+    .flow-note{margin-top:16px;background:var(--jade-a12);border:1px solid rgba(0,194,133,.25);
+      border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--mist);line-height:1.6}
+    .flow-fee{margin-top:12px;background:var(--gold-a15);border:1px solid var(--gold-a25);
+      border-radius:9px;padding:14px;font-size:13px}
+    .fee-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--gold)}
+
+    /* ─── REVIEW SYSTEM ─── */
+    .rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+    .tl{position:relative}
+    .tl-line{position:absolute;left:18px;top:40px;bottom:40px;width:2px;
+      background:linear-gradient(var(--gold-a25),var(--jade-a12))}
+    .tl-step{display:flex;gap:18px;padding:16px 0}
+    .tl-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:15px;flex-shrink:0;z-index:1;
+      border:2px solid var(--gold-a25);background:var(--surface)}
+    .tl-dot.live{border-color:var(--jade);background:var(--jade-a12)}
+    .tl-dot.blocked{border-color:rgba(240,58,58,.4);background:rgba(240,58,58,.08)}
+    .tl-t{font-size:14px;font-weight:600;padding-top:7px;margin-bottom:3px}
+    .tl-d{font-size:12.5px;color:var(--mist);line-height:1.55}
+
+    .rev-box{background:var(--surface);border:1px solid var(--gold-a25);
+      border-radius:var(--r2);padding:32px}
+    .rb-title{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin-bottom:8px}
+    .rb-desc{font-size:13.5px;color:var(--mist);line-height:1.7;margin-bottom:22px}
+    .rb-points{display:flex;flex-direction:column;gap:14px}
+    .rbp{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;line-height:1.55}
+    .rbp-ic{font-size:18px;flex-shrink:0;margin-top:1px}
+    .db-lock{margin-top:20px;background:rgba(240,58,58,.07);
+      border:1px solid rgba(240,58,58,.22);border-radius:9px;
+      padding:14px 16px;font-size:12.5px;color:var(--mist);line-height:1.6;
+      display:flex;gap:10px;align-items:flex-start}
+
+    /* ─── INSURANCE ─── */
+    .ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+    .ins-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .ic{background:var(--surface2);border:1px solid var(--gold-a25);
+      border-radius:var(--r);padding:22px 18px;text-align:center;
+      transition:all .2s;cursor:default}
+    .ic:hover{border-color:var(--jade);transform:translateY(-3px);
+      box-shadow:0 12px 36px rgba(0,194,133,.12)}
+    .ic-icon{font-size:30px;display:block;margin-bottom:10px}
+    .ic-title{font-size:14px;font-weight:700;margin-bottom:5px}
+    .ic-desc{font-size:12px;color:var(--mist);line-height:1.5}
+    .ic-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;
+      color:var(--jade);font-weight:700;margin-top:9px}
+    .check-list{display:flex;flex-direction:column;gap:12px;margin-top:32px}
+    .ci{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--mist)}
+    .ci-tick{color:var(--jade);font-size:17px;flex-shrink:0}
+
+    /* ─── COMPARISON ─── */
+    .comp{display:grid;grid-template-columns:1fr 1fr 1fr;
+      border:1px solid var(--gold-a25);border-radius:var(--r2);overflow:hidden}
+    .cc:nth-child(2){background:linear-gradient(180deg,var(--gold-a15) 0%,transparent 100%);
+      border-left:1px solid var(--gold-a25);border-right:1px solid var(--gold-a25)}
+    .ch{padding:26px;border-bottom:1px solid var(--gold-a25);text-align:center}
+    .ch-label{font-size:11px;color:var(--mist);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+    .ch-name{font-family:'Syne',sans-serif;font-weight:800;font-size:17px}
+    .cc:nth-child(2) .ch-name{color:var(--gold)}
+    .cr{padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.04);
+      font-size:13px;color:var(--mist);text-align:center;
+      display:flex;align-items:center;justify-content:center;min-height:54px}
+    .cc:nth-child(2) .cr{font-weight:600;color:var(--ink)}
+    .cr.hdr{background:var(--surface);font-size:11.5px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.5px;justify-content:flex-start}
+    .tk{color:var(--jade);font-size:19px}
+    .xx{color:rgba(255,255,255,.15);font-size:19px}
+
+    /* ─── WHY ─── */
+    .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .wc{background:var(--surface);border:1px solid var(--gold-a25);
+      border-radius:var(--r2);padding:30px}
+    .wc-icon{font-size:34px;display:block;margin-bottom:16px}
+    .wc-title{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;
+      letter-spacing:-.3px;margin-bottom:10px}
+    .wc-desc{font-size:13.5px;color:var(--mist);line-height:1.7}
+
+    /* ─── CATEGORIES ─── */
+    .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .cat{background:var(--surface);border:1px solid var(--gold-a25);
+      border-radius:var(--r);padding:22px 16px;text-align:center;
+      text-decoration:none;color:var(--ink);transition:all .2s;display:block}
+    .cat:hover{border-color:var(--gold);background:var(--gold-a15);transform:translateY(-2px)}
+    .cat-ic{font-size:32px;display:block;margin-bottom:10px}
+    .cat-name{font-size:14px;font-weight:700;margin-bottom:3px}
+    .cat-count{font-size:11.5px;color:var(--mist)}
+
+    /* ─── CTA ─── */
+    .cta-box{background:linear-gradient(135deg,var(--gold-a15),var(--jade-a12));
+      border:1px solid var(--gold-a25);border-radius:24px;
+      padding:80px 60px;text-align:center;position:relative;overflow:hidden}
+    .cta-box::before{content:'';position:absolute;top:-100px;left:50%;
+      transform:translateX(-50%);width:600px;height:600px;pointer-events:none;
+      background:radial-gradient(circle,rgba(240,165,0,.09),transparent 60%)}
+    .cta-box h2{margin-bottom:12px}
+    .cta-box p{font-size:17px;color:var(--mist);max-width:440px;
+      margin:0 auto 36px;line-height:1.7}
+    .cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+    /* ─── FOOTER ─── */
+    footer{border-top:1px solid var(--gold-a25);padding:56px 48px 36px;
+      max-width:1160px;margin:0 auto}
+    .fg{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;margin-bottom:48px}
+    .fb p{font-size:13.5px;color:var(--mist);line-height:1.7;
+      margin-top:14px;max-width:260px}
+    .fc h5{font-size:11px;font-weight:700;text-transform:uppercase;
+      letter-spacing:1.5px;color:var(--mist);margin-bottom:16px}
+    .fc a{display:block;font-size:13.5px;color:rgba(216,228,240,.55);
+      text-decoration:none;margin-bottom:10px;transition:color .15s}
+    .fc a:hover{color:var(--ink)}
+    .fb-bottom{display:flex;justify-content:space-between;align-items:center;
+      padding-top:24px;border-top:1px solid rgba(240,165,0,.1);
+      font-size:12.5px;color:var(--mist);flex-wrap:wrap;gap:10px}
+    .fl{display:flex;gap:18px}
+    .fl a{color:var(--mist);text-decoration:none}
+    .fl a:hover{color:var(--ink)}
+
+    @media(max-width:1024px){
+      nav{padding:0 20px}.nav-links{display:none}
+      .w{padding:0 20px}
+      .hero{padding:90px 20px 60px}
+      .strip-grid{grid-template-columns:1fr 1fr}
+      .si-item{border-bottom:1px solid var(--gold-a25)}
+      .hiw-grid,.rev-grid,.ins-grid{grid-template-columns:1fr}
+      .comp{grid-template-columns:1fr}
+      .cc:nth-child(2){border:none}
+      .cats{grid-template-columns:1fr 1fr}
+      .why-grid{grid-template-columns:1fr}
+      .cta-box{padding:48px 24px}
+      footer{padding:40px 20px 28px}
+      .fg{grid-template-columns:1fr 1fr;gap:36px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="shield">✓</div>
+    <span class="wordmark">Trade<b>Shield</b></span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#insurance">Insurance</a>
+    <a href="#trades">Trades</a>
+  </div>
+  <div class="nav-right">
+    <a href="login.html" class="btn-ghost">Sign In</a>
+    <a href="signup.html" class="btn-solid">Get Started Free</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+
+    <div class="launch-tag">
+      <div class="launch-dot"></div>
+      UK's First Insured Trades Marketplace
+    </div>
+
+    <h1>
+      TRADES DONE<br/>
+      <span class="g">RIGHT.</span><br/>
+      PAYMENT <span class="u">GUARANTEED.</span>
+    </h1>
+
+    <p class="hero-sub">Post jobs, hire verified insured tradespeople, pay through escrow. Money is locked until you approve the work. Reviews only unlock when the job is complete. The UK trades industry, finally fixed.</p>
+
+    <div class="hero-chips">
+      <div class="chip">🔒 Escrow Payments</div>
+      <div class="chip">🛡️ Insurance Verified</div>
+      <div class="chip">⭐ Locked Reviews</div>
+      <div class="chip">🤝 Dual Accountability</div>
+    </div>
+
+    <div class="hero-btns">
+      <a href="signup.html?type=client" class="btn-solid btn-xl">Post a Job — Free →</a>
+      <a href="signup.html?type=trader" class="btn-ghost btn-xl">Join as a Trader</a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hs">
+        <span class="hs-val loading" id="hs-traders">—</span>
+        <div class="hs-label">Verified Traders</div>
+      </div>
+      <div class="hs">
+        <span class="hs-val loading" id="hs-jobs">—</span>
+        <div class="hs-label">Jobs Posted</div>
+      </div>
+      <div class="hs">
+        <span class="hs-val loading" id="hs-escrow">—</span>
+        <div class="hs-label">Held in Escrow</div>
+      </div>
+      <div class="hs">
+        <span class="hs-val">£0</span>
+        <div class="hs-label">To Post a Job</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOUR PILLARS -->
+<div class="strip">
+  <div class="strip-grid">
+    <div class="strip-item">
+      <span class="si-n">01 / 04</span>
+      <span class="si-icon">🔒</span>
+      <div class="si-title">Escrow Payments</div>
+      <p class="si-desc">Payment is captured by Stripe when a bid is accepted. Locked until the client approves. Nobody can access it mid-job — not the trader, not the client, not us.</p>
+    </div>
+    <div class="strip-item">
+      <span class="si-n">02 / 04</span>
+      <span class="si-icon">🛡️</span>
+      <div class="si-title">Insurance Required</div>
+      <p class="si-desc">Traders cannot accept a single job without verified Public Liability Insurance. No badge, no work. We check it — it is not self-declared.</p>
+    </div>
+    <div class="strip-item">
+      <span class="si-n">03 / 04</span>
+      <span class="si-icon">⭐</span>
+      <div class="si-title">Reviews Locked</div>
+      <p class="si-desc">Leaving a review is impossible until payment is released and the job is confirmed complete. Enforced by a database trigger — not just the UI. No fake ratings.</p>
+    </div>
+    <div class="strip-item">
+      <span class="si-n">04 / 04</span>
+      <span class="si-icon">🤝</span>
+      <div class="si-title">Both Sides Rated</div>
+      <p class="si-desc">After every job, clients rate traders and traders rate clients. Bad actors on either side get identified. The whole marketplace gets safer over time.</p>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background:var(--surface)">
+  <div class="w">
+    <span class="eyebrow">// The Process</span>
+    <h2>BUILT FOR<br/><em>BOTH SIDES.</em></h2>
+
+    <div class="hiw-tabs">
+      <button class="htab on" onclick="tab('client',this)">🏠 I'm a Client</button>
+      <button class="htab" onclick="tab('trader',this)">🔧 I'm a Trader</button>
+    </div>
+
+    <div class="hiw-grid">
+      <div>
+        <div class="steps" id="client-steps">
+          <div class="step"><div class="sn">01</div><div><div class="st">Post your job — free</div><div class="sd">Describe the work, upload photos, set your budget. Takes 3 minutes. Verified traders in your area are notified immediately.</div></div></div>
+          <div class="step"><div class="sn">02</div><div><div class="st">Review bids from insured traders</div><div class="sd">Every bidder shows their insurance badge, verified rating history, qualifications, and trade licence. No unverified traders can bid.</div></div></div>
+          <div class="step"><div class="sn">03</div><div><div class="st">Accept a bid — funds go to escrow</div><div class="sd">Stripe captures the full job amount and holds it securely. The trader can see the money is guaranteed. Work starts with no financial risk to either side.</div></div></div>
+          <div class="step"><div class="sn">04</div><div><div class="st">Approve completion — release payment</div><div class="sd">Satisfied? Tap approve. Stripe transfers to the trader's account within 2 business days. Reviews unlock for both parties — only now, never before.</div></div></div>
+        </div>
+        <div class="steps" id="trader-steps" style="display:none">
+          <div class="step"><div class="sn">01</div><div><div class="st">Verify your profile</div><div class="sd">Upload your insurance certificate, trade licence, and ID. We verify it within 24 hours. Until then you can browse — you just can't bid.</div></div></div>
+          <div class="step"><div class="sn">02</div><div><div class="st">Browse and bid on local jobs</div><div class="sd">See live jobs posted by real clients near you. Your insurance badge is shown on every bid — clients actively filter for insured traders.</div></div></div>
+          <div class="step"><div class="sn">03</div><div><div class="st">Start work knowing you're paid</div><div class="sd">Once your bid is accepted, the client's money is locked in escrow before you start. You have full financial security from the first day of every job.</div></div></div>
+          <div class="step"><div class="sn">04</div><div><div class="st">Complete the job — get paid and rated</div><div class="sd">Mark the job done. Client inspects and approves. Payment transfers to your bank in 2 business days. A verified review posts to your public profile.</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flow-card">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(240,165,0,.5);text-transform:uppercase;margin-bottom:16px">Escrow Lifecycle</div>
+          <div class="flow-row"><div class="fn">1</div><div class="ft">Client pays into escrow</div><div class="fs done">Captured</div></div>
+          <div class="flow-row"><div class="fn">2</div><div class="ft">Funds locked — work begins</div><div class="fs locked">Locked</div></div>
+          <div class="flow-row"><div class="fn">3</div><div class="ft">Trader marks job complete</div><div class="fs pending">Pending</div></div>
+          <div class="flow-row"><div class="fn">4</div><div class="ft">Client approves work</div><div class="fs done">Approved</div></div>
+          <div class="flow-row"><div class="fn">5</div><div class="ft">Stripe transfers to trader</div><div class="fs done">Paid</div></div>
+          <div class="flow-row"><div class="fn">6</div><div class="ft">Reviews unlock — both parties</div><div class="fs done">⭐ Live</div></div>
+          <div class="flow-note">🔐 Reviews are blocked at database level until Step 4. No way to leave a review before this — via the UI or the API.</div>
+          <div class="flow-fee">
+            <div style="font-size:11px;color:var(--mist);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Platform Fee</div>
+            <div class="fee-val">8%</div>
+            <div style="font-size:12.5px;color:var(--mist);margin-top:4px">Deducted from trader payout on completion. Free to post jobs. No monthly fee. No subscriptions.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEW SYSTEM -->
+<section id="reviews">
+  <div class="w">
+    <div class="rev-grid">
+      <div>
+        <span class="eyebrow">// The Review Problem — Solved</span>
+        <h2>REVIEWS THAT<br/><em>MEAN SOMETHING.</em></h2>
+        <p class="desc">The UK trades industry is full of fake reviews — traders buying them, clients leaving revenge ratings mid-job. TradeShield has made both impossible at the database level.</p>
+
+        <div class="tl">
+          <div class="tl-line"></div>
+          <div class="tl-step"><div class="tl-dot">📋</div><div><div class="tl-t">Job posted & bid accepted</div><div class="tl-d">Review system is locked. Neither party can submit. Not in the UI. Not via the API.</div></div></div>
+          <div class="tl-step"><div class="tl-dot">🔒</div><div><div class="tl-t">Escrow locked — work begins</div><div class="tl-d">Payment secured by Stripe. Reviews locked throughout the entire job.</div></div></div>
+          <div class="tl-step"><div class="tl-dot blocked">🔐</div><div><div class="tl-t">Trader marks complete</div><div class="tl-d">Client notified to inspect work. Reviews still locked — job not approved yet.</div></div></div>
+          <div class="tl-step"><div class="tl-dot live">✅</div><div><div class="tl-t">Client approves — payment released</div><div class="tl-d">Only at this moment does the database unlock reviews for both parties.</div></div></div>
+          <div class="tl-step"><div class="tl-dot live">⭐</div><div><div class="tl-t">Both leave honest reviews</div><div class="tl-d">Neither side can read the other's review before writing their own. Both go live together.</div></div></div>
+        </div>
+      </div>
+
+      <div class="rev-box">
+        <div class="rb-title">HOW THE LOCK WORKS</div>
+        <p class="rb-desc">This is not a UI restriction. It is a PostgreSQL BEFORE INSERT trigger on the reviews table itself.</p>
+        <div class="rb-points">
+          <div class="rbp"><div class="rbp-ic">🗄️</div><div>Every attempt to write a review row fires a <code style="font-family:monospace;color:var(--gold);font-size:12.5px">BEFORE INSERT</code> trigger.</div></div>
+          <div class="rbp"><div class="rbp-ic">🔍</div><div>It checks: is <code style="font-family:monospace;color:var(--gold);font-size:12.5px">jobs.status = 'completed'</code>? Are <code style="font-family:monospace;color:var(--gold);font-size:12.5px">client_can_review</code> and <code style="font-family:monospace;color:var(--gold);font-size:12.5px">trader_can_review</code> both TRUE?</div></div>
+          <div class="rbp"><div class="rbp-ic">🚫</div><div>If either check fails, the INSERT is rejected with a hard exception. The row never exists.</div></div>
+          <div class="rbp"><div class="rbp-ic">🔑</div><div>Those flags are only set by <code style="font-family:monospace;color:var(--gold);font-size:12.5px">complete_job()</code> — a server-side function called exclusively when the client approves payment release.</div></div>
+          <div class="rbp"><div class="rbp-ic">👁️</div><div>Reviews are submitted privately and go live only when both submit — or 14 days pass. Neither reads the other's review before writing their own.</div></div>
+        </div>
+        <div class="db-lock"><span>🔐</span><span>No UI workaround. No API bypass. The hardest review integrity guarantee on any UK trades platform.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSURANCE -->
+<section id="insurance" style="background:var(--surface)">
+  <div class="w">
+    <div class="ins-grid">
+      <div>
+        <span class="eyebrow">// Trader Verification</span>
+        <h2>EVERY TRADER.<br/><em>INSURED.</em><br/>VERIFIED.</h2>
+        <p class="desc">No insurance means no account. We check credentials before any trader can accept work. Every badge you see is verified — not self-declared.</p>
+        <div class="check-list">
+          <div class="ci"><span class="ci-tick">✓</span> Public Liability Insurance — min £1m, policy expiry tracked</div>
+          <div class="ci"><span class="ci-tick">✓</span> Gas Safe Register — all gas engineers checked live against the register</div>
+          <div class="ci"><span class="ci-tick">✓</span> NICEIC / NAPIT — all electricians verified with their scheme</div>
+          <div class="ci"><span class="ci-tick">✓</span> Government-issued ID — verified via secure partner</div>
+          <div class="ci"><span class="ci-tick">✓</span> Annual re-verification — let your insurance expire, lose your account</div>
+        </div>
+      </div>
+      <div class="ins-cards">
+        <div class="ic"><span class="ic-icon">🛡️</span><div class="ic-title">Public Liability</div><p class="ic-desc">Minimum £1m cover. We track expiry and notify traders before it lapses.</p><div class="ic-tag">✓ Required to trade</div></div>
+        <div class="ic"><span class="ic-icon">🔥</span><div class="ic-title">Gas Safe</div><p class="ic-desc">All gas engineers checked against the official Gas Safe Register.</p><div class="ic-tag">✓ Live register check</div></div>
+        <div class="ic"><span class="ic-icon">⚡</span><div class="ic-title">NICEIC / NAPIT</div><p class="ic-desc">Electricians verified against their registered competent persons scheme.</p><div class="ic-tag">✓ Scheme verified</div></div>
+        <div class="ic"><span class="ic-icon">🪪</span><div class="ic-title">ID Verified</div><p class="ic-desc">Government-issued ID checked. Anonymity is not an option on TradeShield.</p><div class="ic-tag">✓ Identity confirmed</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section>
+  <div class="w">
+    <span class="eyebrow">// vs. Everyone Else</span>
+    <h2 style="margin-bottom:44px">WE ARE NOT<br/><em>LIKE THE REST.</em></h2>
+    <div class="comp">
+      <div class="cc">
+        <div class="ch"><div class="ch-label">Others</div><div class="ch-name" style="color:var(--mist)">Checkatrade / Rated People</div></div>
+        <div class="cr hdr">Feature</div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+      </div>
+      <div class="cc">
+        <div class="ch"><div class="ch-label">TradeShield</div><div class="ch-name">TradeShield 🛡️</div></div>
+        <div class="cr hdr" style="background:var(--gold-a15)">Feature</div>
+        <div class="cr">🔒 Escrow payment on every job</div>
+        <div class="cr">🛡️ Insurance verified — required, not optional</div>
+        <div class="cr">⭐ Reviews locked until job complete</div>
+        <div class="cr">🤝 Dual review — both sides rated</div>
+        <div class="cr">📋 Dispute resolution team</div>
+        <div class="cr">💰 Free to post jobs — always</div>
+      </div>
+      <div class="cc">
+        <div class="ch"><div class="ch-label">Others</div><div class="ch-name" style="color:var(--mist)">MyBuilder / TrustATrader</div></div>
+        <div class="cr hdr">Feature</div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="xx">✗</span></div>
+        <div class="cr"><span class="tk">✓</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRADES -->
+<section id="trades" style="background:var(--surface)">
+  <div class="w">
+    <span class="eyebrow">// Every Trade, Insured</span>
+    <h2>FIND THE TRADE<br/><em>YOU NEED.</em></h2>
+    <p class="desc" style="margin-bottom:36px">Every trader in every category carries verified insurance before they can accept work.</p>
+    <div class="cats">
+      <a href="signup.html?type=client&cat=plumbing" class="cat"><span class="cat-ic">🔧</span><div class="cat-name">Plumbing</div><div class="cat-count" id="c-plumbing">Loading...</div></a>
+      <a href="signup.html?type=client&cat=electrical" class="cat"><span class="cat-ic">⚡</span><div class="cat-name">Electrical</div><div class="cat-count" id="c-electrical">Loading...</div></a>
+      <a href="signup.html?type=client&cat=building" class="cat"><span class="cat-ic">🧱</span><div class="cat-name">Building</div><div class="cat-count" id="c-building">Loading...</div></a>
+      <a href="signup.html?type=client&cat=roofing" class="cat"><span class="cat-ic">🏠</span><div class="cat-name">Roofing</div><div class="cat-count" id="c-roofing">Loading...</div></a>
+      <a href="signup.html?type=client&cat=gas" class="cat"><span class="cat-ic">🔥</span><div class="cat-name">Gas & Heating</div><div class="cat-count" id="c-gas">Loading...</div></a>
+      <a href="signup.html?type=client&cat=carpentry" class="cat"><span class="cat-ic">🪚</span><div class="cat-name">Carpentry</div><div class="cat-count" id="c-carpentry">Loading...</div></a>
+      <a href="signup.html?type=client&cat=painting" class="cat"><span class="cat-ic">🎨</span><div class="cat-name">Painting & Decorating</div><div class="cat-count" id="c-painting">Loading...</div></a>
+      <a href="signup.html?type=client&cat=landscaping" class="cat"><span class="cat-ic">🌿</span><div class="cat-name">Landscaping</div><div class="cat-count" id="c-landscaping">Loading...</div></a>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section>
+  <div class="w">
+    <span class="eyebrow">// The Problem We're Fixing</span>
+    <h2>THE UK TRADES<br/><em>INDUSTRY IS BROKEN.</em><br/>WE'RE FIXING IT.</h2>
+    <p class="desc" style="margin-bottom:48px">Three problems every client and trader in the UK faces. Three reasons TradeShield exists.</p>
+    <div class="why-grid">
+      <div class="wc"><span class="wc-icon">💸</span><div class="wc-title">Clients Get Ripped Off</div><p class="wc-desc">Paying upfront and never seeing the trader again. Shoddy work with no recourse. No way to hold anyone accountable. TradeShield escrow means your money never leaves until you're satisfied.</p></div>
+      <div class="wc"><span class="wc-icon">🧾</span><div class="wc-title">Traders Chase Invoices</div><p class="wc-desc">Skilled tradespeople completing good work and then spending months chasing payment. Cash flow destroyed. With TradeShield, the money is locked and guaranteed before you start the job.</p></div>
+      <div class="wc"><span class="wc-icon">⭐</span><div class="wc-title">Reviews Are Meaningless</div><p class="wc-desc">Current platforms are full of fake 5-star reviews bought in bulk or left by friends. Clients cannot tell who is genuinely good. TradeShield reviews can only exist after real, completed, paid work.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:var(--surface)">
+  <div class="w">
+    <div class="cta-box">
+      <span class="eyebrow">// Join TradeShield</span>
+      <h2>THE UK TRADES<br/><em>INDUSTRY CHANGED</em><br/>TODAY.</h2>
+      <p>Insured traders. Locked escrow. Verified reviews. Free to post. The platform the UK trades industry has needed for 30 years.</p>
+      <div class="cta-btns">
+        <a href="signup.html?type=client" class="btn-solid btn-xl">Post a Job — Free →</a>
+        <a href="signup.html?type=trader" class="btn-ghost btn-xl">Register as a Trader</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fg">
+    <div class="fb">
+      <a href="/" class="nav-logo"><div class="shield">✓</div><span class="wordmark">Trade<b>Shield</b></span></a>
+      <p>The UK's first insured trades marketplace. Escrow payments, verified insurance, locked reviews. The trades industry, finally fixed.</p>
+    </div>
+    <div class="fc"><h5>Platform</h5><a href="signup.html?type=client">Post a Job</a><a href="signup.html?type=trader">Join as Trader</a><a href="#how">How It Works</a><a href="#insurance">Verification</a></div>
+    <div class="fc"><h5>Company</h5><a href="#">About</a><a href="#">Careers</a><a href="#">Press</a><a href="#">Blog</a></div>
+    <div class="fc"><h5>Support</h5><a href="#">Help Centre</a><a href="#">Disputes</a><a href="#">Contact</a><a href="#">Safety</a></div>
+  </div>
+  <div class="fb-bottom">
+    <span>© 2025 TradeShield Ltd. Registered in England & Wales.</span>
+    <div class="fl"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Escrow Terms</a><a href="#">Cookies</a></div>
+  </div>
+</footer>
+
+<script>
+// ═══ REPLACE THESE TWO LINES ═══
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ════════════════════════════════
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const cats = ['plumbing','electrical','building','roofing','gas','carpentry','painting','landscaping'];
+
+async function loadStats() {
+  try {
+    const [t, j, e] = await Promise.all([
+      sb.from('profiles').select('id',{count:'exact',head:true}).eq('user_type','trader').eq('is_verified',true),
+      sb.from('jobs').select('id',{count:'exact',head:true}),
+      sb.from('escrow_transactions').select('gross_amount').eq('status','locked')
+    ]);
+    document.getElementById('hs-traders').textContent = (t.count||0).toLocaleString();
+    document.getElementById('hs-jobs').textContent = (j.count||0).toLocaleString();
+    const total = (e.data||[]).reduce((s,x)=>s+(x.gross_amount||0),0);
+    document.getElementById('hs-escrow').textContent = total > 0 ? '£'+(total/1000).toFixed(0)+'k' : '£0';
+  } catch {
+    ['hs-traders','hs-jobs','hs-escrow'].forEach(id => document.getElementById(id).textContent = '0');
+  }
+  document.querySelectorAll('.loading').forEach(el => el.classList.remove('loading'));
+}
+
+async function loadCats() {
+  for (const c of cats) {
+    try {
+      const {count} = await sb.from('profiles').select('id',{count:'exact',head:true}).eq('user_type','trader').eq('is_verified',true).eq('trade',c);
+      const el = document.getElementById('c-'+c);
+      if (el) el.textContent = count > 0 ? count.toLocaleString()+' verified trader'+(count!==1?'s':'') : 'Be the first in this trade';
+    } catch { const el=document.getElementById('c-'+c); if(el) el.textContent='Accepting registrations'; }
+  }
+}
+
+function tab(type, btn) {
+  document.querySelectorAll('.htab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('client-steps').style.display = type==='client'?'flex':'none';
+  document.getElementById('trader-steps').style.display = type==='trader'?'flex':'none';
+}
+
+loadStats();
+loadCats();
+</script>
+</body>
+</html>

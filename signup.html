@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sign Up — TradeShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05090f;--surface:#0b1220;--surface2:#111d30;--gold:#f0a500;--gold2:#ffc140;--gold-a15:rgba(240,165,0,.15);--gold-a25:rgba(240,165,0,.25);--jade:#00c285;--ruby:#f03a3a;--ink:#d8e4f0;--mist:#6b849e}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(240,165,0,.06),transparent 70%)}
+    .wrap{width:100%;max-width:480px}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;justify-content:center;margin-bottom:32px}
+    .shield{width:32px;height:36px;background:var(--gold);clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:var(--bg)}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+    .wordmark b{color:var(--gold)}
+    .card{background:var(--surface);border:1px solid var(--gold-a25);border-radius:20px;padding:36px;backdrop-filter:blur(20px)}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px;margin-bottom:6px}
+    .sub{font-size:14px;color:var(--mist);margin-bottom:28px}
+    .type-select{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px}
+    .type-btn{padding:14px;border:2px solid var(--gold-a25);border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;text-align:center;transition:all .18s;font-family:'Epilogue',sans-serif}
+    .type-btn .ti{font-size:26px;display:block;margin-bottom:7px}
+    .type-btn .tl{font-size:13px;font-weight:700;display:block}
+    .type-btn .ts{font-size:11px;color:var(--mist);display:block;margin-top:2px}
+    .type-btn.on{border-color:var(--gold);background:var(--gold-a15)}
+    .type-btn:hover{border-color:var(--gold)}
+    .form-group{margin-bottom:16px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    label{display:block;font-size:11.5px;font-weight:700;color:var(--mist);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+    input,select{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--ink);font-family:'Epilogue',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+    input:focus,select:focus{border-color:var(--gold);background:rgba(240,165,0,.03)}
+    input::placeholder{color:var(--mist)}
+    select option{background:var(--surface)}
+    .trader-only{display:none}
+    .trader-only.show{display:block}
+    .btn-submit{width:100%;padding:15px;border-radius:10px;background:var(--gold);border:none;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;margin-top:6px}
+    .btn-submit:hover{background:var(--gold2);box-shadow:0 6px 24px rgba(240,165,0,.35)}
+    .btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+    .alt-link{text-align:center;font-size:13.5px;color:var(--mist);margin-top:20px}
+    .alt-link a{color:var(--gold);text-decoration:none;font-weight:600}
+    .toast{position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--gold-a25);border-radius:12px;padding:13px 17px;font-size:13.5px;display:none;z-index:999;max-width:310px}
+    .toast.show{display:block;animation:si .25s ease}
+    .toast.ok{border-color:var(--jade);color:var(--jade)}
+    .toast.err{border-color:var(--ruby);color:var(--ruby)}
+    @keyframes si{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="logo">
+    <div class="shield">✓</div>
+    <span class="wordmark">Trade<b>Shield</b></span>
+  </a>
+  <div class="card">
+    <h1>Create Account</h1>
+    <p class="sub">Join TradeShield — the UK's safest trades marketplace</p>
+
+    <div class="type-select">
+      <button class="type-btn on" id="btn-client" onclick="setType('client',this)">
+        <span class="ti">🏠</span><span class="tl">I'm a Client</span><span class="ts">Post jobs & hire</span>
+      </button>
+      <button class="type-btn" id="btn-trader" onclick="setType('trader',this)">
+        <span class="ti">🔧</span><span class="tl">I'm a Trader</span><span class="ts">Find work & get paid</span>
+      </button>
+    </div>
+
+    <form id="form">
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input id="fname" type="text" placeholder="John" required/></div>
+        <div class="form-group"><label>Last Name</label><input id="lname" type="text" placeholder="Smith" required/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input id="email" type="email" placeholder="john@example.com" required/></div>
+      <div class="form-group"><label>Password</label><input id="pass" type="password" placeholder="Minimum 8 characters" minlength="8" required/></div>
+      <div class="form-group"><label>Postcode</label><input id="postcode" type="text" placeholder="M1 1AB" required/></div>
+      <div class="form-group"><label>Phone Number</label><input id="phone" type="tel" placeholder="07700 900000" required/></div>
+
+      <div class="trader-only" id="trader-extra">
+        <div class="form-group">
+          <label>Primary Trade</label>
+          <select id="trade">
+            <option value="">Select your trade...</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="electrical">Electrical</option>
+            <option value="building">Building & Construction</option>
+            <option value="roofing">Roofing</option>
+            <option value="carpentry">Carpentry & Joinery</option>
+            <option value="painting">Painting & Decorating</option>
+            <option value="gas">Gas & Heating</option>
+            <option value="landscaping">Landscaping & Gardening</option>
+            <option value="tiling">Tiling</option>
+            <option value="plastering">Plastering</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Service Radius</label>
+          <select id="radius">
+            <option value="10">Up to 10 miles</option>
+            <option value="25" selected>Up to 25 miles</option>
+            <option value="50">Up to 50 miles</option>
+            <option value="100">Up to 100 miles</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">Create My Account →</button>
+    </form>
+    <p class="alt-link">Already have an account? <a href="login.html">Sign In</a></p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let userType = 'client';
+const params = new URLSearchParams(location.search);
+if (params.get('type') === 'trader') {
+  setType('trader', document.getElementById('btn-trader'));
+  document.getElementById('btn-client').classList.remove('on');
+}
+
+function setType(t, btn) {
+  userType = t;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('trader-extra').classList.toggle('show', t === 'trader');
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const {data, error} = await sb.auth.signUp({
+      email: document.getElementById('email').value,
+      password: document.getElementById('pass').value,
+      options: { data: {
+        first_name: document.getElementById('fname').value.trim(),
+        last_name: document.getElementById('lname').value.trim(),
+        full_name: document.getElementById('fname').value.trim() + ' ' + document.getElementById('lname').value.trim(),
+        user_type: userType,
+        postcode: document.getElementById('postcode').value.trim().toUpperCase(),
+        phone: document.getElementById('phone').value.trim(),
+        trade: userType === 'trader' ? document.getElementById('trade').value : null,
+        service_radius: userType === 'trader' ? parseInt(document.getElementById('radius').value) : null,
+      }}
+    });
+    if (error) throw error;
+    toast('✅ Account created! Check your email to verify.', 'ok');
+    setTimeout(() => window.location.href = userType === 'trader' ? 'dashboard-trader.html' : 'dashboard-client.html', 2000);
+  } catch(err) {
+    toast('❌ ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = 'Create My Account →';
+  }
+});
+</script>
+</body>
+</html>

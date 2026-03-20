@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sign In — TradeShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05090f;--surface:#0b1220;--gold:#f0a500;--gold2:#ffc140;--gold-a15:rgba(240,165,0,.15);--gold-a25:rgba(240,165,0,.25);--jade:#00c285;--ruby:#f03a3a;--ink:#d8e4f0;--mist:#6b849e}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(240,165,0,.06),transparent 70%)}
+    .wrap{width:100%;max-width:440px}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;justify-content:center;margin-bottom:32px}
+    .shield{width:32px;height:36px;background:var(--gold);clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:var(--bg)}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+    .wordmark b{color:var(--gold)}
+    .card{background:var(--surface);border:1px solid var(--gold-a25);border-radius:20px;padding:36px}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px;margin-bottom:6px}
+    .sub{font-size:14px;color:var(--mist);margin-bottom:28px}
+    .form-group{margin-bottom:16px}
+    label{display:block;font-size:11.5px;font-weight:700;color:var(--mist);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+    input{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--ink);font-family:'Epilogue',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+    input:focus{border-color:var(--gold);background:rgba(240,165,0,.03)}
+    input::placeholder{color:var(--mist)}
+    .forgot{text-align:right;font-size:12px;margin-top:7px}
+    .forgot a{color:var(--gold);text-decoration:none}
+    .btn-submit{width:100%;padding:15px;border-radius:10px;background:var(--gold);border:none;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s;margin-top:6px}
+    .btn-submit:hover{background:var(--gold2);box-shadow:0 6px 24px rgba(240,165,0,.35)}
+    .btn-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+    .alt-link{text-align:center;font-size:13.5px;color:var(--mist);margin-top:20px}
+    .alt-link a{color:var(--gold);text-decoration:none;font-weight:600}
+    .toast{position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--gold-a25);border-radius:12px;padding:13px 17px;font-size:13.5px;display:none;z-index:999;max-width:310px}
+    .toast.show{display:block;animation:si .25s ease}
+    .toast.err{border-color:var(--ruby);color:var(--ruby)}
+    @keyframes si{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="logo">
+    <div class="shield">✓</div>
+    <span class="wordmark">Trade<b>Shield</b></span>
+  </a>
+  <div class="card">
+    <h1>Welcome Back</h1>
+    <p class="sub">Sign in to your TradeShield account</p>
+    <form id="form">
+      <div class="form-group"><label>Email</label><input id="email" type="email" placeholder="john@example.com" required/></div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="pass" type="password" placeholder="Your password" required/>
+        <div class="forgot"><a href="#">Forgot password?</a></div>
+      </div>
+      <button type="submit" class="btn-submit" id="submit-btn">Sign In →</button>
+    </form>
+    <p class="alt-link">No account? <a href="signup.html">Create one free</a></p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const {data, error} = await sb.auth.signInWithPassword({
+      email: document.getElementById('email').value,
+      password: document.getElementById('pass').value
+    });
+    if (error) throw error;
+    const t = data.user.user_metadata.user_type;
+    window.location.href = t === 'trader' ? 'dashboard-trader.html' : 'dashboard-client.html';
+  } catch(err) {
+    const el = document.getElementById('toast');
+    el.textContent = '❌ ' + err.message; el.className = 'toast show err';
+    setTimeout(() => el.classList.remove('show'), 5000);
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+});
+</script>
+</body>
+</html>

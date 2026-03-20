@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Leave a Review — TradeShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05090f;--sf:#0b1220;--sf2:#111d30;--gold:#f0a500;--gold2:#ffc140;--ga15:rgba(240,165,0,.15);--ga25:rgba(240,165,0,.25);--jade:#00c285;--ruby:#f03a3a;--ink:#d8e4f0;--mist:#6b849e}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(240,165,0,.05),transparent 70%)}
+    .wrap{width:100%;max-width:580px}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;justify-content:center;margin-bottom:30px}
+    .shield{width:30px;height:34px;background:var(--gold);clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--bg)}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:19px}
+    .wordmark b{color:var(--gold)}
+    /* LOCKED */
+    .locked{background:var(--sf);border:1px solid rgba(240,58,58,.3);border-radius:20px;padding:44px;text-align:center;display:none}
+    .locked-ic{font-size:52px;display:block;margin-bottom:18px}
+    .locked-t{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:12px}
+    .locked-d{font-size:14px;color:var(--mist);line-height:1.7;max-width:380px;margin:0 auto}
+    /* CARD */
+    .card{background:var(--sf);border:1px solid var(--ga25);border-radius:20px;padding:36px}
+    .job-bar{background:var(--sf2);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:16px}
+    .jb-info .jb-title{font-size:14px;font-weight:700}
+    .jb-info .jb-meta{font-size:12px;color:var(--mist);margin-top:2px}
+    .jb-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--jade)}
+    .unlock-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(0,194,133,.1);border:1px solid rgba(0,194,133,.25);border-radius:100px;padding:5px 14px;font-size:11.5px;font-weight:700;color:var(--jade);margin-bottom:22px}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.5px;margin-bottom:5px}
+    .sub{font-size:13.5px;color:var(--mist);margin-bottom:28px;line-height:1.6}
+    /* STARS */
+    .star-group{margin-bottom:24px}
+    .sg-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mist);display:block;margin-bottom:9px}
+    .stars{display:flex;gap:6px}
+    .star{font-size:38px;cursor:pointer;color:rgba(255,255,255,.12);transition:color .1s,transform .1s;user-select:none}
+    .star:hover,.star.on{color:var(--gold)}
+    .star:active{transform:scale(.92)}
+    .sub-ratings{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+    .sr-row{}
+    .sr-stars{display:flex;gap:3px}
+    .sr-star{font-size:21px;cursor:pointer;color:rgba(255,255,255,.12);transition:color .1s}
+    .sr-star:hover,.sr-star.on{color:var(--gold)}
+    /* FORM */
+    .fg{margin-bottom:16px}
+    label{display:block;font-size:11px;font-weight:700;color:var(--mist);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+    input,textarea{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--ink);font-family:'Epilogue',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+    input:focus,textarea:focus{border-color:var(--gold)}
+    textarea{resize:vertical;min-height:96px}
+    .dual-note{background:var(--ga15);border:1px solid var(--ga25);border-radius:10px;padding:14px 16px;font-size:12.5px;color:var(--mist);line-height:1.65;margin-bottom:20px}
+    .dual-note strong{color:var(--gold)}
+    .btn-submit{width:100%;padding:14px;border-radius:10px;background:var(--gold);border:none;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s}
+    .btn-submit:hover{background:var(--gold2);box-shadow:0 6px 24px rgba(240,165,0,.35)}
+    .btn-submit:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+    /* SUCCESS */
+    .success{display:none;text-align:center;padding:12px 0}
+    .success-ic{font-size:60px;display:block;margin-bottom:18px}
+    .success-t{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:10px}
+    .success-d{font-size:14px;color:var(--mist);line-height:1.7;margin-bottom:28px}
+    .wait-box{background:var(--sf2);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:16px 18px;font-size:13px;color:var(--mist);line-height:1.65;text-align:left}
+    .btn-back{display:inline-flex;align-items:center;margin-top:22px;padding:12px 26px;border-radius:9px;background:var(--gold);color:var(--bg);font-size:14px;font-weight:700;text-decoration:none}
+    .toast{position:fixed;top:20px;right:20px;background:var(--sf);border:1px solid var(--ga25);border-radius:12px;padding:13px 16px;font-size:13px;display:none;z-index:999;max-width:300px}
+    .toast.show{display:block}
+    .toast.err{border-color:var(--ruby);color:var(--ruby)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="logo"><div class="shield">✓</div><span class="wordmark">Trade<b>Shield</b></span></a>
+
+  <div class="locked" id="locked">
+    <span class="locked-ic">🔐</span>
+    <div class="locked-t">REVIEWS ARE LOCKED</div>
+    <p class="locked-d" id="locked-msg">Reviews can only be left after the client approves job completion and payment is released. This is enforced at the database level.</p>
+  </div>
+
+  <div class="card" id="form-wrap">
+    <div class="job-bar">
+      <div class="jb-info"><div class="jb-title" id="jb-title">Loading...</div><div class="jb-meta" id="jb-meta">—</div></div>
+      <div class="jb-amt" id="jb-amt">£—</div>
+    </div>
+
+    <div class="unlock-tag">✅ Review Unlocked — Job Approved & Complete</div>
+
+    <h1 id="rev-heading">Rate Your Trader</h1>
+    <p class="sub" id="rev-sub">Your honest review is only possible because this job was completed and payment released. It means everything to the next client.</p>
+
+    <div class="star-group">
+      <span class="sg-label">Overall Rating</span>
+      <div class="stars" id="stars-overall">
+        <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span>
+        <span class="star" data-v="3">★</span><span class="star" data-v="4">★</span>
+        <span class="star" data-v="5">★</span>
+      </div>
+    </div>
+
+    <div id="sub-section">
+      <div class="sub-ratings">
+        <div class="sr-row"><span class="sg-label">Quality of Work</span><div class="sr-stars" id="stars-quality"><span class="sr-star" data-v="1">★</span><span class="sr-star" data-v="2">★</span><span class="sr-star" data-v="3">★</span><span class="sr-star" data-v="4">★</span><span class="sr-star" data-v="5">★</span></div></div>
+        <div class="sr-row"><span class="sg-label">Communication</span><div class="sr-stars" id="stars-comm"><span class="sr-star" data-v="1">★</span><span class="sr-star" data-v="2">★</span><span class="sr-star" data-v="3">★</span><span class="sr-star" data-v="4">★</span><span class="sr-star" data-v="5">★</span></div></div>
+        <div class="sr-row"><span class="sg-label">Timeliness</span><div class="sr-stars" id="stars-time"><span class="sr-star" data-v="1">★</span><span class="sr-star" data-v="2">★</span><span class="sr-star" data-v="3">★</span><span class="sr-star" data-v="4">★</span><span class="sr-star" data-v="5">★</span></div></div>
+        <div class="sr-row"><span class="sg-label">Value for Money</span><div class="sr-stars" id="stars-val"><span class="sr-star" data-v="1">★</span><span class="sr-star" data-v="2">★</span><span class="sr-star" data-v="3">★</span><span class="sr-star" data-v="4">★</span><span class="sr-star" data-v="5">★</span></div></div>
+      </div>
+    </div>
+
+    <div class="fg"><label>Review Title</label><input id="r-title" placeholder="e.g. Excellent work, would hire again" type="text"/></div>
+    <div class="fg"><label>Your Review</label><textarea id="r-comment" placeholder="Tell other clients about the quality, punctuality, tidiness and communication. Be honest."></textarea></div>
+
+    <div class="dual-note"><strong>How dual reviews work:</strong> Your review is submitted privately. It only goes live once the other party has also submitted theirs — or after 14 days. Neither of you can see the other's review before writing your own. Fair, every time.</div>
+
+    <button class="btn-submit" id="submit-btn" disabled>Submit Review →</button>
+  </div>
+
+  <div class="card" id="success" style="display:none">
+    <div class="success" style="display:block">
+      <span class="success-ic">⭐</span>
+      <div class="success-t">Review Submitted</div>
+      <p class="success-d">Your review has been securely recorded. It will go live once the other party submits theirs, or after 14 days.</p>
+      <div class="wait-box">🔐 <strong>Why isn't it live yet?</strong><br/><br/>Both reviews go live at the same time so neither party is influenced by what the other said. This is the fairest review system in the UK trades industry — and the only one where every review is from a real, completed, paid job.</div>
+      <a href="#" id="back-link" class="btn-back">Back to Dashboard</a>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const params = new URLSearchParams(location.search);
+const jobId = params.get('job_id');
+let user = null, job = null, reviewType = null;
+const ratings = {overall:0,quality:0,comm:0,time:0,val:0};
+
+async function init() {
+  const {data:{user:u}} = await sb.auth.getUser();
+  if (!u) { window.location.href='login.html'; return; }
+  user = u;
+  if (!jobId) { showLocked('No job specified.'); return; }
+
+  const {data:j,error} = await sb.from('jobs')
+    .select('*,client:profiles!jobs_client_id_fkey(first_name,last_name),trader:profiles!jobs_accepted_trader_id_fkey(first_name,last_name)')
+    .eq('id',jobId).single();
+
+  if (error||!j) { showLocked('Job not found.'); return; }
+  job = j;
+
+  const isClient = j.client_id===u.id;
+  const isTrader = j.accepted_trader_id===u.id;
+  if (!isClient&&!isTrader) { showLocked('You are not a party to this job.'); return; }
+  if (j.status!=='completed') { showLocked(`Reviews are locked until the job is complete. Current status: ${j.status}`); return; }
+  if (isClient&&!j.client_can_review) { showLocked('Your review is not yet unlocked. Please approve job completion first.'); return; }
+  if (isTrader&&!j.trader_can_review) { showLocked('Your review is not yet unlocked. The job must be approved by the client first.'); return; }
+
+  // Check already reviewed
+  const {data:exist} = await sb.from('reviews').select('id').eq('job_id',jobId).eq('reviewer_id',u.id).maybeSingle();
+  if (exist) { document.getElementById('form-wrap').style.display='none'; document.getElementById('success').style.display='block'; return; }
+
+  reviewType = isClient ? 'client_to_trader' : 'trader_to_client';
+  document.getElementById('jb-title').textContent = j.title;
+  document.getElementById('jb-meta').textContent = `📍 ${j.postcode} · ${j.category}`;
+  document.getElementById('jb-amt').textContent = `£${(j.final_price||j.budget)?.toLocaleString()}`;
+  document.getElementById('back-link').href = isClient ? 'dashboard-client.html' : 'dashboard-trader.html';
+
+  if (isClient) {
+    document.getElementById('rev-heading').textContent = `Rate Your Trader`;
+    document.getElementById('rev-sub').textContent = `Share your honest experience with ${j.trader?.first_name||'your trader'} on this job.`;
+    document.getElementById('sub-section').style.display='block';
+  } else {
+    document.getElementById('rev-heading').textContent = `Rate Your Client`;
+    document.getElementById('rev-sub').textContent = `How was it working with ${j.client?.first_name||'this client'}? Your rating helps other traders.`;
+    document.getElementById('sub-section').style.display='none';
+  }
+  setupStars();
+}
+
+function setupStars() {
+  // Overall
+  const os = document.querySelectorAll('#stars-overall .star');
+  os.forEach((s,i)=>{
+    s.addEventListener('mouseover',()=>os.forEach((x,j)=>x.classList.toggle('on',j<=i)));
+    s.addEventListener('mouseleave',()=>os.forEach((x,j)=>x.classList.toggle('on',j<ratings.overall)));
+    s.addEventListener('click',()=>{ ratings.overall=i+1; os.forEach((x,j)=>x.classList.toggle('on',j<ratings.overall)); checkReady(); });
+  });
+  // Sub-ratings
+  [['stars-quality','quality'],['stars-comm','comm'],['stars-time','time'],['stars-val','val']].forEach(([id,key])=>{
+    const ss = document.querySelectorAll(`#${id} .sr-star`);
+    ss.forEach((s,i)=>{
+      s.addEventListener('mouseover',()=>ss.forEach((x,j)=>x.classList.toggle('on',j<=i)));
+      s.addEventListener('mouseleave',()=>ss.forEach((x,j)=>x.classList.toggle('on',j<ratings[key])));
+      s.addEventListener('click',()=>{ ratings[key]=i+1; ss.forEach((x,j)=>x.classList.toggle('on',j<ratings[key])); });
+    });
+  });
+}
+
+function checkReady() { document.getElementById('submit-btn').disabled = ratings.overall===0; }
+
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  if (!ratings.overall) return;
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Submitting...';
+  try {
+    const row = {
+      job_id:jobId,reviewer_id:user.id,
+      reviewee_id:reviewType==='client_to_trader'?job.accepted_trader_id:job.client_id,
+      review_type:reviewType,rating:ratings.overall,
+      title:document.getElementById('r-title').value||null,
+      comment:document.getElementById('r-comment').value||null,
+      ...(reviewType==='client_to_trader'?{
+        rating_quality:ratings.quality||null,
+        rating_communication:ratings.comm||null,
+        rating_timeliness:ratings.time||null,
+        rating_value:ratings.val||null,
+      }:{})
+    };
+    const {error} = await sb.from('reviews').insert(row);
+    if (error) {
+      const msg = error.message.includes('REVIEW_LOCKED') ? '🔐 Review is locked — job must be completed first.' : 'Error: '+error.message;
+      const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show err';
+      setTimeout(()=>t.classList.remove('show'),5000);
+      btn.disabled=false; btn.textContent='Submit Review →';
+      return;
+    }
+    document.getElementById('form-wrap').style.display='none';
+    document.getElementById('success').style.display='block';
+  } catch(err) {
+    btn.disabled=false; btn.textContent='Submit Review →';
+  }
+});
+
+function showLocked(msg) {
+  document.getElementById('form-wrap').style.display='none';
+  document.getElementById('locked').style.display='block';
+  if (msg) document.getElementById('locked-msg').textContent=msg;
+}
+
+init();
+</script>
+</body>
+</html>

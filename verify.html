@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Trader Verification — TradeShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05090f;--sf:#0b1220;--sf2:#111d30;--gold:#f0a500;--gold2:#ffc140;--ga15:rgba(240,165,0,.15);--ga25:rgba(240,165,0,.25);--jade:#00c285;--ruby:#f03a3a;--ink:#d8e4f0;--mist:#6b849e}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:60px 20px 60px}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 50% 40% at 50% 0%,rgba(240,165,0,.05),transparent 70%)}
+    .wrap{max-width:680px;margin:0 auto}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:36px}
+    .shield{width:30px;height:34px;background:var(--gold);clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--bg)}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:19px}
+    .wordmark b{color:var(--gold)}
+    h1{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;letter-spacing:-1px;margin-bottom:8px}
+    .page-sub{font-size:15px;color:var(--mist);line-height:1.7;margin-bottom:36px;max-width:520px}
+    /* STEPS */
+    .steps-header{display:flex;gap:0;margin-bottom:32px;background:var(--sf);border:1px solid var(--ga25);border-radius:12px;overflow:hidden}
+    .sh-step{flex:1;padding:14px;text-align:center;font-size:12.5px;font-weight:700;color:var(--mist);border-right:1px solid var(--ga25);transition:all .2s}
+    .sh-step:last-child{border-right:none}
+    .sh-step.done{background:var(--jade);color:var(--bg)}  
+    .sh-step.active{background:var(--ga15);color:var(--gold)}
+    /* SECTIONS */
+    .vsec{background:var(--sf);border:1px solid var(--ga25);border-radius:16px;padding:28px;margin-bottom:16px}
+    .vsec-title{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+    .vsec-sub{font-size:13px;color:var(--mist);margin-bottom:20px;line-height:1.6}
+    .req{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--ga15);color:var(--gold);border:1px solid var(--ga25)}
+    .opt{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(107,132,158,.12);color:var(--mist);border:1px solid rgba(107,132,158,.25)}
+    .fg{margin-bottom:14px}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+    label{display:block;font-size:11px;font-weight:700;color:var(--mist);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+    input,select{width:100%;padding:11px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--ink);font-family:'Epilogue',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    input:focus,select:focus{border-color:var(--gold)}
+    select option{background:var(--sf)}
+    /* FILE UPLOAD */
+    .upload-zone{border:2px dashed var(--ga25);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--ga15)}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .uz-icon{font-size:28px;display:block;margin-bottom:8px}
+    .uz-text{font-size:13px;font-weight:600;margin-bottom:3px}
+    .uz-sub{font-size:11.5px;color:var(--mist)}
+    .file-preview{display:flex;align-items:center;gap:10px;background:var(--sf2);border:1px solid var(--ga25);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:13px}
+    .fp-name{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fp-rm{background:none;border:none;color:var(--mist);cursor:pointer;font-size:16px;padding:0 2px}
+    /* SUBMIT */
+    .submit-section{background:var(--sf);border:1px solid var(--ga25);border-radius:16px;padding:28px;margin-top:20px}
+    .submit-note{font-size:13px;color:var(--mist);line-height:1.65;margin-bottom:20px}
+    .btn-submit{width:100%;padding:15px;border-radius:10px;background:var(--gold);border:none;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .18s}
+    .btn-submit:hover{background:var(--gold2);box-shadow:0 6px 24px rgba(240,165,0,.35)}
+    .btn-submit:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+    /* SUCCESS */
+    .success-screen{background:var(--sf);border:1px solid rgba(0,194,133,.3);border-radius:20px;padding:48px;text-align:center;display:none}
+    .success-ic{font-size:52px;display:block;margin-bottom:18px}
+    .success-t{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:10px}
+    .success-d{font-size:14px;color:var(--mist);line-height:1.7;margin-bottom:24px}
+    .btn-back{display:inline-flex;padding:12px 26px;border-radius:9px;background:var(--gold);color:var(--bg);font-size:14px;font-weight:700;text-decoration:none}
+    .toast{position:fixed;top:20px;right:20px;background:var(--sf);border:1px solid var(--ga25);border-radius:12px;padding:13px 16px;font-size:13px;display:none;z-index:999;max-width:310px}
+    .toast.show{display:block}
+    .toast.ok{border-color:var(--jade);color:var(--jade)}
+    .toast.err{border-color:var(--ruby);color:var(--ruby)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="index.html" class="logo"><div class="shield">✓</div><span class="wordmark">Trade<b>Shield</b></span></a>
+
+  <h1>Trader Verification</h1>
+  <p class="page-sub">Complete your verification to start accepting jobs. We check your insurance, qualifications and ID within 24 hours. Until verified, you can browse jobs but cannot bid.</p>
+
+  <div class="steps-header">
+    <div class="sh-step active" id="step1">1. Insurance</div>
+    <div class="sh-step" id="step2">2. Qualifications</div>
+    <div class="sh-step" id="step3">3. ID Verification</div>
+    <div class="sh-step" id="step4">4. Review</div>
+  </div>
+
+  <div id="main-form">
+
+    <!-- INSURANCE -->
+    <div class="vsec">
+      <div class="vsec-title">🛡️ Public Liability Insurance <span class="req">Required</span></div>
+      <p class="vsec-sub">All traders must hold minimum £1m Public Liability Insurance. Upload your current certificate. We track expiry and will notify you before it lapses.</p>
+      <div class="frow">
+        <div class="fg"><label>Insurance Provider</label><input id="ins-provider" placeholder="e.g. Hiscox, AXA, Simply Business"/></div>
+        <div class="fg"><label>Policy Number</label><input id="ins-policy" placeholder="Policy number"/></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Cover Amount</label>
+          <select id="ins-amount">
+            <option value="1000000">£1m</option>
+            <option value="2000000">£2m</option>
+            <option value="5000000">£5m</option>
+            <option value="10000000">£10m</option>
+          </select>
+        </div>
+        <div class="fg"><label>Expiry Date</label><input id="ins-expiry" type="date"/></div>
+      </div>
+      <label>Upload Certificate (PDF or image)</label>
+      <div class="upload-zone" id="ins-zone">
+        <input type="file" id="ins-file" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile('ins')"/>
+        <span class="uz-icon">📄</span>
+        <div class="uz-text">Click to upload or drag and drop</div>
+        <div class="uz-sub">PDF, JPG or PNG · Max 10MB</div>
+      </div>
+      <div class="file-preview" id="ins-preview" style="display:none">
+        <span>📄</span><span class="fp-name" id="ins-fname"></span>
+        <button class="fp-rm" onclick="removeFile('ins')">✕</button>
+      </div>
+    </div>
+
+    <!-- GAS SAFE (conditional) -->
+    <div class="vsec" id="gas-section">
+      <div class="vsec-title">🔥 Gas Safe Registration <span class="opt">Gas & Heating traders only</span></div>
+      <p class="vsec-sub">If you carry out gas work, you must be registered with Gas Safe. Enter your registration number and we will verify it against the official register.</p>
+      <div class="frow">
+        <div class="fg"><label>Gas Safe Number</label><input id="gas-num" placeholder="e.g. 123456"/></div>
+        <div class="fg"><label>Expiry Date</label><input id="gas-expiry" type="date"/></div>
+      </div>
+    </div>
+
+    <!-- NICEIC / NAPIT -->
+    <div class="vsec" id="elec-section">
+      <div class="vsec-title">⚡ NICEIC / NAPIT Registration <span class="opt">Electricians only</span></div>
+      <p class="vsec-sub">Electricians must be registered with a recognised competent persons scheme. Enter your registration number below.</p>
+      <div class="frow">
+        <div class="fg"><label>Scheme</label>
+          <select id="elec-scheme">
+            <option value="niceic">NICEIC</option>
+            <option value="napit">NAPIT</option>
+            <option value="elecsa">ELECSA</option>
+          </select>
+        </div>
+        <div class="fg"><label>Registration Number</label><input id="elec-num" placeholder="Registration number"/></div>
+      </div>
+    </div>
+
+    <!-- ID -->
+    <div class="vsec">
+      <div class="vsec-title">🪪 Identity Verification <span class="req">Required</span></div>
+      <p class="vsec-sub">Upload a photo of a government-issued ID (passport or driving licence). This is stored securely and never shared with clients.</p>
+      <div class="upload-zone" id="id-zone">
+        <input type="file" id="id-file" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFile('id')"/>
+        <span class="uz-icon">🪪</span>
+        <div class="uz-text">Click to upload ID document</div>
+        <div class="uz-sub">Passport, driving licence · JPG or PNG · Max 10MB</div>
+      </div>
+      <div class="file-preview" id="id-preview" style="display:none">
+        <span>🪪</span><span class="fp-name" id="id-fname"></span>
+        <button class="fp-rm" onclick="removeFile('id')">✕</button>
+      </div>
+    </div>
+
+    <div class="submit-section">
+      <p class="submit-note">Once submitted, our team will review your documents within 24 hours. You will receive an email when your account is verified. Until then you can browse jobs and plan your bids.</p>
+      <button class="btn-submit" id="submit-btn" onclick="submit()">Submit for Verification →</button>
+    </div>
+
+  </div>
+
+  <div class="success-screen" id="success">
+    <span class="success-ic">🛡️</span>
+    <div class="success-t">Verification Submitted</div>
+    <p class="success-d">Your documents have been uploaded securely. Our team will review and verify within 24 hours. You'll receive an email confirmation shortly.</p>
+    <a href="dashboard-trader.html" class="btn-back">Back to Dashboard</a>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let user = null;
+const files = {ins:null,id:null};
+
+async function init() {
+  const {data:{user:u}} = await sb.auth.getUser();
+  if (!u) { window.location.href='login.html'; return; }
+  user = u;
+  if (u.user_metadata.user_type !== 'trader') { window.location.href='dashboard-client.html'; return; }
+}
+
+function handleFile(key) {
+  const input = document.getElementById(key+'-file');
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10*1024*1024) { toast('File too large — max 10MB','err'); return; }
+  files[key] = file;
+  document.getElementById(key+'-fname').textContent = file.name;
+  document.getElementById(key+'-preview').style.display='flex';
+  document.getElementById(key+'-zone').style.borderColor='var(--jade)';
+}
+
+function removeFile(key) {
+  files[key]=null;
+  document.getElementById(key+'-file').value='';
+  document.getElementById(key+'-preview').style.display='none';
+  document.getElementById(key+'-zone').style.borderColor='';
+}
+
+async function submit() {
+  if (!files.ins) { toast('Please upload your insurance certificate','err'); return; }
+  if (!files.id) { toast('Please upload your ID document','err'); return; }
+  if (!document.getElementById('ins-provider').value) { toast('Please enter your insurance provider','err'); return; }
+  if (!document.getElementById('ins-expiry').value) { toast('Please enter your insurance expiry date','err'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Uploading documents...';
+
+  try {
+    // Upload insurance doc
+    const insPath = `insurance-docs/${user.id}/${Date.now()}-${files.ins.name}`;
+    const {error:insErr} = await sb.storage.from('insurance-docs').upload(insPath, files.ins);
+    if (insErr) throw insErr;
+
+    // Upload ID doc
+    const idPath = `id-verification/${user.id}/${Date.now()}-${files.id.name}`;
+    const {error:idErr} = await sb.storage.from('id-verification').upload(idPath, files.id);
+    if (idErr) throw idErr;
+
+    // Update profile with verification data
+    const {error:profErr} = await sb.from('profiles').update({
+      insurance_provider: document.getElementById('ins-provider').value,
+      insurance_policy_number: document.getElementById('ins-policy').value,
+      insurance_amount_gbp: parseInt(document.getElementById('ins-amount').value),
+      insurance_expiry: document.getElementById('ins-expiry').value,
+      insurance_doc_url: insPath,
+      gas_safe_number: document.getElementById('gas-num').value||null,
+      gas_safe_expiry: document.getElementById('gas-expiry').value||null,
+      niceic_number: document.getElementById('elec-scheme').value !== 'niceic' ? null : document.getElementById('elec-num').value||null,
+      napit_number: document.getElementById('elec-scheme').value !== 'napit' ? null : document.getElementById('elec-num').value||null,
+      id_verified: false, // set to true by admin after review
+    }).eq('id', user.id);
+    if (profErr) throw profErr;
+
+    document.getElementById('main-form').style.display='none';
+    document.getElementById('success').style.display='block';
+
+  } catch(err) {
+    toast('Upload error: '+err.message, 'err');
+    btn.disabled=false; btn.textContent='Submit for Verification →';
+  }
+}
+
+function toast(msg,type) { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.classList.remove('show'),5000); }
+
+init();
+</script>
+</body>
+</html>

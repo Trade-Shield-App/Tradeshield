@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Trader Dashboard — TradeShield</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05090f;--sf:#0b1220;--sf2:#111d30;--sf3:#172236;--gold:#f0a500;--gold2:#ffc140;--ga15:rgba(240,165,0,.15);--ga25:rgba(240,165,0,.25);--jade:#00c285;--ja12:rgba(0,194,133,.12);--ruby:#f03a3a;--ink:#d8e4f0;--mist:#6b849e;--sb:260px}
+    body{font-family:'Epilogue',sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+    aside{width:var(--sb);background:var(--sf);border-right:1px solid var(--ga25);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:24px;border-bottom:1px solid var(--ga25)}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .shield{width:30px;height:34px;background:var(--gold);clip-path:polygon(50% 0%,100% 20%,100% 70%,50% 100%,0% 70%,0% 20%);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--bg)}
+    .wordmark{font-family:'Syne',sans-serif;font-weight:800;font-size:19px}
+    .wordmark b{color:var(--gold)}
+    .sb-nav{flex:1;padding:18px 10px}
+    .ni{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:9px;color:var(--mist);font-size:13.5px;font-weight:500;transition:all .15s;margin-bottom:3px;cursor:pointer;border:none;background:none;font-family:'Epilogue',sans-serif;width:100%;text-align:left}
+    .ni:hover{background:var(--ga15);color:var(--ink)}
+    .ni.on{background:var(--ga15);color:var(--gold);border:1px solid var(--ga25)}
+    .sb-user{padding:18px 22px;border-top:1px solid var(--ga25)}
+    .su-row{display:flex;align-items:center;gap:11px}
+    .su-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--jade),#0880aa);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--bg);flex-shrink:0}
+    .su-name{font-size:13.5px;font-weight:600}
+    .su-trade{font-size:11px;color:var(--mist)}
+    main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column}
+    .topbar{background:var(--sf);border-bottom:1px solid var(--ga25);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .tb-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.5px}
+    .btn{padding:9px 18px;border-radius:8px;font-family:'Epilogue',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+    .btn-out{background:transparent;border:1px solid var(--ga25);color:var(--ink)}
+    .btn-out:hover{border-color:var(--gold);color:var(--gold)}
+    .content{padding:28px 32px;flex:1}
+    /* VERIFY BANNER */
+    .vb{background:var(--ga15);border:1px solid var(--ga25);border-radius:13px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .vb-text{font-size:13.5px;line-height:1.6}
+    .vb-text strong{color:var(--gold)}
+    .vb-btn{background:var(--gold);border:none;border-radius:8px;padding:9px 18px;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+    /* STATS */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    .sc{background:var(--sf);border:1px solid var(--ga25);border-radius:13px;padding:20px}
+    .sc-label{font-size:11px;color:var(--mist);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px}
+    .sc-val{font-family:'Syne',sans-serif;font-weight:800;font-size:34px;letter-spacing:-1px;color:var(--gold)}
+    .sc-sub{font-size:11px;color:var(--mist);margin-top:3px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .col-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.3px;margin-bottom:14px}
+    /* BROWSE */
+    .bc{background:var(--sf);border:1px solid var(--ga25);border-radius:13px;padding:20px;margin-bottom:11px;transition:border-color .15s}
+    .bc:hover{border-color:rgba(240,165,0,.45)}
+    .bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+    .bc-title{font-size:15px;font-weight:600}
+    .bc-meta{font-size:12px;color:var(--mist);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+    .bc-budget{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--gold);margin-bottom:7px}
+    .bc-desc{font-size:12.5px;color:var(--mist);line-height:1.6;margin-bottom:12px}
+    .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .c-urg{background:rgba(240,58,58,.12);color:var(--ruby);border:1px solid rgba(240,58,58,.3)}
+    .c-week{background:var(--ga15);color:var(--gold);border:1px solid var(--ga25)}
+    .c-flex{background:rgba(107,132,158,.12);color:var(--mist);border:1px solid rgba(107,132,158,.25)}
+    .btn-bid{padding:9px 18px;background:var(--gold);border:none;border-radius:8px;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s}
+    .btn-bid:hover{background:var(--gold2)}
+    .btn-bid:disabled{opacity:.35;cursor:not-allowed}
+    /* ACTIVE */
+    .ac{background:var(--sf);border:1px solid var(--ga25);border-radius:13px;padding:18px;margin-bottom:11px}
+    .ac-title{font-size:15px;font-weight:600;margin-bottom:5px}
+    .ac-meta{font-size:12px;color:var(--mist);display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+    .ac-amt{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:var(--jade);margin-bottom:6px}
+    .ac-note{background:var(--ga15);border:1px solid var(--ga25);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--mist);margin-bottom:10px;line-height:1.55}
+    .btn-comp{padding:9px 18px;background:var(--jade);border:none;border-radius:8px;color:var(--bg);font-family:'Epilogue',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+    /* EMPTY */
+    .empty{text-align:center;padding:40px 16px;color:var(--mist)}
+    .empty-ic{font-size:36px;display:block;margin-bottom:11px}
+    .empty-t{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:7px}
+    .empty-d{font-size:12.5px;line-height:1.6}
+    /* BID MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--sf);border:1px solid var(--ga25);border-radius:20px;padding:32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+    .modal h2{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.5px;margin-bottom:20px}
+    .fg{margin-bottom:14px}
+    label{display:block;font-size:11px;font-weight:700;color:var(--mist);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+    input,textarea{width:100%;padding:11px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--ink);font-family:'Epilogue',sans-serif;font-size:13.5px;outline:none;transition:border-color .15s}
+    input:focus,textarea:focus{border-color:var(--gold)}
+    textarea{resize:vertical;min-height:80px}
+    .m-actions{display:flex;gap:10px;margin-top:6px}
+    .m-actions .btn{flex:1;justify-content:center;padding:13px}
+    .btn-gold{background:var(--gold);color:var(--bg);border:none}
+    .btn-gold:hover{background:var(--gold2)}
+    .jp{background:var(--sf2);border-radius:9px;padding:13px 15px;margin-bottom:18px;font-size:13.5px}
+    .jp-title{font-weight:700;margin-bottom:3px}
+    .jp-meta{font-size:12px;color:var(--mist)}
+    .toast{position:fixed;top:20px;right:20px;background:var(--sf);border:1px solid var(--ga25);border-radius:12px;padding:13px 16px;font-size:13px;display:none;z-index:999;max-width:310px}
+    .toast.show{display:block;animation:si .25s ease}
+    .toast.ok{border-color:var(--jade);color:var(--jade)}
+    .toast.err{border-color:var(--ruby);color:var(--ruby)}
+    @keyframes si{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+    @media(max-width:768px){aside{display:none}main{margin-left:0}.stats{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}.content{padding:16px}}
+  </style>
+</head>
+<body>
+<aside>
+  <div class="sb-logo"><a href="index.html" class="logo"><div class="shield">✓</div><span class="wordmark">Trade<b>Shield</b></span></a></div>
+  <nav class="sb-nav">
+    <button class="ni on"><span>📊</span> Overview</button>
+    <button class="ni"><span>🔍</span> Browse Jobs</button>
+    <button class="ni"><span>📋</span> My Bids</button>
+    <button class="ni"><span>🔒</span> Active Jobs</button>
+    <button class="ni"><span>💰</span> Earnings</button>
+    <button class="ni"><span>⭐</span> My Reviews</button>
+    <button class="ni"><span>🛡️</span> Verification</button>
+    <button class="ni"><span>⚙️</span> Settings</button>
+  </nav>
+  <div class="sb-user">
+    <div class="su-row">
+      <div class="su-av" id="av">?</div>
+      <div><div class="su-name" id="uname">Loading...</div><div class="su-trade" id="utrade">Trader</div></div>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div class="tb-title">Trader Dashboard</div>
+    <button class="btn btn-out" onclick="signOut()">Sign Out</button>
+  </div>
+  <div class="content">
+
+    <div class="vb" id="vb" style="display:none">
+      <div class="vb-text"><strong>⚠️ Complete verification to start accepting jobs.</strong><br/>Upload your insurance certificate, trade licence and ID. Takes 24 hours. Until then you can browse but not bid.</div>
+      <button class="vb-btn" onclick="location.href='verify.html'">Complete Verification →</button>
+    </div>
+
+    <div class="stats">
+      <div class="sc"><div class="sc-label">Active Jobs</div><div class="sc-val" id="s-act">—</div><div class="sc-sub">In progress</div></div>
+      <div class="sc"><div class="sc-label">Pending Bids</div><div class="sc-val" id="s-bids">—</div><div class="sc-sub">Awaiting response</div></div>
+      <div class="sc"><div class="sc-label">Total Earned</div><div class="sc-val" id="s-earn">—</div><div class="sc-sub">All time</div></div>
+      <div class="sc"><div class="sc-label">Rating</div><div class="sc-val" id="s-rate">—</div><div class="sc-sub" id="s-rate-sub"></div></div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="col-title">🔍 Jobs Near You</div>
+        <div id="browse"><div class="empty"><span class="empty-ic">⏳</span><div class="empty-t">Loading jobs...</div></div></div>
+      </div>
+      <div>
+        <div class="col-title">🔒 Your Active Jobs</div>
+        <div id="active"><div class="empty"><span class="empty-ic">🔨</span><div class="empty-t">No active jobs yet</div><p class="empty-d">Browse jobs on the left and submit your first bid.</p></div></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- BID MODAL -->
+<div class="modal-bg" id="bid-modal">
+  <div class="modal">
+    <h2>Submit a Bid</h2>
+    <div class="jp" id="bid-preview"></div>
+    <form id="bid-form">
+      <input type="hidden" id="bid-jid"/>
+      <div class="fg"><label>Your Price (£)</label><input id="bid-amt" type="number" min="1" step="0.01" placeholder="Enter your quote" required/></div>
+      <div class="fg"><label>Estimated Duration</label><input id="bid-dur" placeholder='e.g. "2 days", "1 week"' required/></div>
+      <div class="fg"><label>Message to Client</label><textarea id="bid-msg" placeholder="Describe your approach, relevant experience, and when you can start. Clients can see your insurance badge and rating on your profile." required></textarea></div>
+      <div class="m-actions">
+        <button type="button" class="btn btn-out" onclick="closeBid()">Cancel</button>
+        <button type="submit" class="btn btn-gold" id="bid-btn">Submit Bid →</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let user = null, profile = null;
+const urgChip = {urgent:'<span class="chip c-urg">🚨 Urgent</span>',within_week:'<span class="chip c-week">This Week</span>',flexible:'<span class="chip c-flex">Flexible</span>'};
+
+async function init() {
+  const {data:{user:u}} = await sb.auth.getUser();
+  if (!u) { window.location.href='login.html'; return; }
+  user = u;
+  const {data:p} = await sb.from('profiles').select('*').eq('id',u.id).single();
+  profile = p;
+  const m = u.user_metadata;
+  const ini = ((m.first_name?.[0]||'')+(m.last_name?.[0]||'')).toUpperCase()||'?';
+  document.getElementById('av').textContent = ini;
+  document.getElementById('uname').textContent = m.full_name || u.email;
+  document.getElementById('utrade').textContent = (p?.trade||m.trade||'Trader')+(p?.insurance_verified?' · 🛡️ Insured':'');
+  if (!p?.is_verified) document.getElementById('vb').style.display='flex';
+  document.getElementById('s-earn').textContent = '£'+(p?.total_earned||0).toLocaleString();
+  if (p?.rating_count>0) {
+    document.getElementById('s-rate').textContent = (p.rating_avg||0).toFixed(1)+'★';
+    document.getElementById('s-rate-sub').textContent = p.rating_count+' verified review'+(p.rating_count!==1?'s':'');
+  } else {
+    document.getElementById('s-rate').textContent = '—';
+    document.getElementById('s-rate-sub').textContent = 'No reviews yet';
+  }
+  await Promise.all([loadBrowse(),loadActive(),loadBidStats()]);
+  subscribe();
+}
+
+async function loadBrowse() {
+  const {data,error} = await sb.from('jobs').select('*').eq('status','open').order('created_at',{ascending:false}).limit(20);
+  const el = document.getElementById('browse');
+  if (error||!data?.length) {
+    el.innerHTML=`<div class="empty"><span class="empty-ic">🔍</span><div class="empty-t">No open jobs right now</div><p class="empty-d">New jobs appear here as soon as clients post them. We'll notify you in real time.</p></div>`;
+    return;
+  }
+  el.innerHTML = data.map(job=>`
+    <div class="bc">
+      <div class="bc-top"><div class="bc-title">${job.title}</div>${urgChip[job.urgency]||urgChip.flexible}</div>
+      <div class="bc-meta"><span>📍 ${job.postcode}</span><span>🏷️ ${job.category}</span><span>📅 ${new Date(job.created_at).toLocaleDateString('en-GB')}</span></div>
+      <div class="bc-budget">£${job.budget?.toLocaleString()}</div>
+      <p class="bc-desc">${job.description?.substring(0,130)}${(job.description?.length||0)>130?'...':''}</p>
+      <button class="btn-bid" onclick='openBid(${JSON.stringify(job)})' ${!profile?.is_verified?'disabled title="Complete verification to bid"':''}>
+        ${profile?.is_verified?'Place Bid →':'🔒 Verify to Bid'}
+      </button>
+    </div>`).join('');
+}
+
+async function loadActive() {
+  const {data} = await sb.from('bids').select('*,jobs(*)').eq('trader_id',user.id).eq('status','accepted');
+  const el = document.getElementById('active');
+  const active = (data||[]).filter(b=>['in_progress','review'].includes(b.jobs?.status));
+  document.getElementById('s-act').textContent = active.length;
+  if (!active.length) {
+    el.innerHTML=`<div class="empty"><span class="empty-ic">🔨</span><div class="empty-t">No active jobs yet</div><p class="empty-d">When a client accepts your bid, the job and your guaranteed payment appear here.</p></div>`;
+    return;
+  }
+  el.innerHTML = active.map(bid=>`
+    <div class="ac">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px">
+        <div class="ac-title">${bid.jobs?.title||'—'}</div>
+        <span class="chip" style="background:var(--ga15);color:var(--gold);border:1px solid var(--ga25)">🔒 Escrow</span>
+      </div>
+      <div class="ac-meta"><span>📍 ${bid.jobs?.postcode||'—'}</span><span>🏷️ ${bid.jobs?.category||'—'}</span></div>
+      <div class="ac-amt">£${bid.amount?.toLocaleString()}</div>
+      <div class="ac-note">🔒 Payment locked in escrow. You receive £${((bid.amount||0)*0.92).toLocaleString(undefined,{maximumFractionDigits:2})} after TradeShield's 8% fee when the client approves.</div>
+      ${bid.jobs?.status==='in_progress'?`<button class="btn-comp" onclick="markDone('${bid.jobs.id}')">✅ Mark Job Complete</button>`:''}
+      ${bid.jobs?.status==='review'?`<div style="font-size:13px;color:var(--jade);font-weight:600">✅ Marked complete — awaiting client approval.</div>`:''}
+      ${bid.jobs?.status==='completed'&&!bid.trader_reviewed?`<a href="review.html?job_id=${bid.jobs.id}" style="display:inline-flex;align-items:center;padding:9px 18px;background:var(--gold);border-radius:8px;color:var(--bg);font-size:13px;font-weight:700;text-decoration:none;margin-top:6px">⭐ Leave a Review</a>`:''}
+    </div>`).join('');
+}
+
+async function loadBidStats() {
+  const {data} = await sb.from('bids').select('status').eq('trader_id',user.id);
+  document.getElementById('s-bids').textContent = (data||[]).filter(b=>b.status==='pending').length;
+}
+
+let bidJob = null;
+function openBid(job) {
+  bidJob = job;
+  document.getElementById('bid-jid').value = job.id;
+  document.getElementById('bid-preview').innerHTML = `<div class="jp-title">${job.title}</div><div class="jp-meta">📍 ${job.postcode} · 🏷️ ${job.category} · Client budget: £${job.budget?.toLocaleString()}</div>`;
+  document.getElementById('bid-modal').classList.add('open');
+}
+function closeBid() { document.getElementById('bid-modal').classList.remove('open'); }
+
+document.getElementById('bid-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('bid-btn');
+  btn.disabled=true; btn.textContent='Submitting...';
+  const amt = parseFloat(document.getElementById('bid-amt').value);
+  if (!amt||amt<=0) { toast('Please enter a valid amount','err'); btn.disabled=false; btn.textContent='Submit Bid →'; return; }
+  const {error} = await sb.from('bids').insert({
+    job_id:document.getElementById('bid-jid').value,
+    trader_id:user.id,amount:amt,
+    duration:document.getElementById('bid-dur').value.trim(),
+    message:document.getElementById('bid-msg').value.trim(),
+    status:'pending'
+  });
+  if (error) { toast(error.message.includes('unique')?'You have already bid on this job.':'Error: '+error.message,'err'); }
+  else { toast('✅ Bid submitted — client has been notified.','ok'); closeBid(); document.getElementById('bid-form').reset(); await loadBidStats(); }
+  btn.disabled=false; btn.textContent='Submit Bid →';
+});
+
+async function markDone(jobId) {
+  if (!confirm('Mark this job as complete?\n\nThe client will be notified to inspect the work and approve payment release.')) return;
+  await sb.from('jobs').update({status:'review'}).eq('id',jobId);
+  await sb.functions.invoke('notify-completion',{body:{job_id:jobId}});
+  toast('✅ Marked complete — awaiting client approval.','ok');
+  await loadActive();
+}
+
+function subscribe() {
+  sb.channel('trader-updates')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'jobs'},async()=>{await loadBrowse();toast('🔨 New job posted near you!','ok');})
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'bids',filter:`trader_id=eq.${user.id}`},loadActive)
+    .subscribe();
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href='index.html'; }
+function toast(msg,type) { const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast show ${type}`; setTimeout(()=>t.classList.remove('show'),5000); }
+
+init();
+</script>
+</body>
+</html>
